@@ -3,7 +3,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts"
+import { useState } from "react"
+import dynamic from "next/dynamic"
 
 const monthlyData = [
   { name: "Jan", trees: 5, carbon: 0.1 },
@@ -20,7 +21,15 @@ const monthlyData = [
   { name: "Dec", trees: 0, carbon: 0 },
 ]
 
+// Dynamically import chart components with SSR disabled
+const ChartComponent = dynamic(() => import("./chart-component"), {
+  ssr: false,
+  loading: () => <div className="h-[300px] bg-gray-100 flex items-center justify-center">Loading chart...</div>,
+})
+
 export function DashboardStats() {
+  const [activeTab, setActiveTab] = useState("trees")
+
   return (
     <Card>
       <CardHeader className="pb-2">
@@ -55,41 +64,18 @@ export function DashboardStats() {
           </div>
         </div>
 
-        <Tabs defaultValue="trees">
+        <Tabs defaultValue="trees" onValueChange={setActiveTab}>
           <TabsList className="mb-4">
             <TabsTrigger value="trees">Trees Planted</TabsTrigger>
             <TabsTrigger value="carbon">Carbon Offset</TabsTrigger>
           </TabsList>
 
           <TabsContent value="trees" className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={monthlyData}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="trees" fill="#22c55e" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            <ChartComponent data={monthlyData} type="bar" dataKey="trees" />
           </TabsContent>
 
           <TabsContent value="carbon" className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={monthlyData}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Line
-                  type="monotone"
-                  dataKey="carbon"
-                  stroke="#22c55e"
-                  strokeWidth={2}
-                  dot={{ r: 4 }}
-                  activeDot={{ r: 6 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
+            <ChartComponent data={monthlyData} type="line" dataKey="carbon" />
           </TabsContent>
         </Tabs>
       </CardContent>

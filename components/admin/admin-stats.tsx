@@ -2,22 +2,9 @@
 
 import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  PieChart,
-  Pie,
-  Cell,
-  Legend,
-} from "recharts"
 import { ArrowUpRight, Users, TreePine, DollarSign, Globe } from "lucide-react"
+import { useState } from "react"
+import dynamic from "next/dynamic"
 
 const monthlyData = [
   { name: "Jan", trees: 1200, revenue: 6000 },
@@ -40,9 +27,20 @@ const projectData = [
   { name: "Kenya Reforestation", value: 25 },
 ]
 
-const COLORS = ["#22c55e", "#3b82f6", "#f59e0b"]
+// Dynamically import chart components with SSR disabled
+const AdminChartComponent = dynamic(() => import("./admin-chart-component"), {
+  ssr: false,
+  loading: () => <div className="h-[300px] bg-gray-100 flex items-center justify-center">Loading chart...</div>,
+})
+
+const PieChartComponent = dynamic(() => import("./pie-chart-component"), {
+  ssr: false,
+  loading: () => <div className="h-[300px] bg-gray-100 flex items-center justify-center">Loading chart...</div>,
+})
 
 export function AdminStats() {
+  const [activeTab, setActiveTab] = useState("trees")
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -122,7 +120,7 @@ export function AdminStats() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-2">
           <CardContent className="p-6">
-            <Tabs defaultValue="trees">
+            <Tabs defaultValue="trees" onValueChange={setActiveTab}>
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-semibold">Performance</h3>
                 <TabsList>
@@ -132,34 +130,11 @@ export function AdminStats() {
               </div>
 
               <TabsContent value="trees" className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={monthlyData}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip />
-                    <Bar dataKey="trees" fill="#22c55e" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
+                <AdminChartComponent data={monthlyData} type="bar" dataKey="trees" />
               </TabsContent>
 
               <TabsContent value="revenue" className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={monthlyData}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip formatter={(value) => [`$${value}`, "Revenue"]} />
-                    <Line
-                      type="monotone"
-                      dataKey="revenue"
-                      stroke="#3b82f6"
-                      strokeWidth={2}
-                      dot={{ r: 4 }}
-                      activeDot={{ r: 6 }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
+                <AdminChartComponent data={monthlyData} type="line" dataKey="revenue" />
               </TabsContent>
             </Tabs>
           </CardContent>
@@ -169,26 +144,7 @@ export function AdminStats() {
           <CardContent className="p-6">
             <h3 className="text-lg font-semibold mb-4">Project Distribution</h3>
             <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={projectData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  >
-                    {projectData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Legend />
-                  <Tooltip formatter={(value) => [`${value}%`, "Percentage"]} />
-                </PieChart>
-              </ResponsiveContainer>
+              <PieChartComponent data={projectData} />
             </div>
           </CardContent>
         </Card>
